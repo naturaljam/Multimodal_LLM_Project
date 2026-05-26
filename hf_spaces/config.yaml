@@ -1,0 +1,52 @@
+# ============================================================
+# VLM 智能图文问答助手 - 全局配置文件
+# 本地编辑，上传到 Kaggle/Colab 后自动适配路径
+# ============================================================
+
+model:
+  name: "Qwen/Qwen2.5-VL-7B-Instruct"
+  quantization: "nf4"            # bitsandbytes 4-bit NormalFloat4
+  device_map: "auto"
+  torch_dtype: "float16"          # 量化时实际加载为 NF4
+  max_new_tokens: 128
+  temperature: 0.0                # 评测时用 greedy decoding
+
+preprocess:
+  resize:
+    strategy: "pad"               # pad → 28 的倍数（Qwen2.5-VL 要求）
+    max_pixels: 16384             # ≈ 128×128 patches，约对应 448×448 的 8 倍
+  ocr:
+    enabled: false                # baseline: false; 增强实验: true
+    backend: "easyocr"            # easyocr | paddleocr
+    lang_list: ["ch_sim", "en"]
+
+prompt:
+  default_template: "general"     # general | scene | chinese
+  fewshot:
+    enabled: false                # baseline: false
+    max_examples: 3
+    examples_file: "data/fewshot_examples.json"
+
+datasets:
+  vqa_v2:
+    name: "HuggingFaceM4/VQAv2"
+    split: "validation"
+    subset_size: 1000             # 先用 1000 条跑通，正式实验可调大
+  textvqa:
+    name: "lmms-lab/textvqa"
+    split: "validation"
+    subset_size: 500
+  custom_chinese:
+    # 自建中文集，格式：JSON 列表 [{"image_path": "...", "question": "...", "reference_answers": [...]}]
+    path: "data/custom_chinese.json"
+    subset_size: 100
+
+output:
+  results_dir: "experiments/results/"
+  formats: ["json", "csv"]
+
+# ---- 平台检测（运行时自动设置，无需手动修改） ----
+platform:
+  # local / kaggle / colab / huggingface_space
+  # 由 config.py 自动检测
+  detect: true
